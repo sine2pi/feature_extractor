@@ -1,6 +1,10 @@
 # feature_extractor
 base for smart feature extractor..  the future is tomorrow!
 
+from feature_extractor2 import EchoFeatureExtractor
+
+extractor = EchoFeatureExtractor(audio_ctx=1500, sampling_rate=16000, feature_size=128, padding=True, max_length="max_length")
+
 ``` python
 import torch
 import numpy as np
