@@ -2,7 +2,6 @@
 base for smart feature extractor..  the future is tomorrow!
 
 ``` python
-
 import torch
 import numpy as np
 import torchaudio.transforms as T
@@ -95,7 +94,10 @@ class EchoFeatureExtractor:
         audio_ctx=1500,  # This parameter should match the audio_ctx in your model's Dimensions
         padding_value=0.0,
         device="cpu",
-        return_attention_mask=False
+        return_attention_mask=False,
+        padding=True,
+        max_length="max_length",
+        truncation=True
     ):
         self.feature_size = feature_size
         self.sampling_rate = sampling_rate
@@ -107,6 +109,9 @@ class EchoFeatureExtractor:
         self.return_attention_mask = return_attention_mask
         self.model_input_names = ["input_features"]
         self.padding_side = "right"
+        self.padding = padding
+        self.max_length = max_length
+        self.truncation = truncation
         
         self.mel_transform = T.MelSpectrogram(
             sample_rate=sampling_rate,
@@ -124,9 +129,9 @@ class EchoFeatureExtractor:
         audio,
         sampling_rate=None,
         return_tensors="pt",
-        padding=False,
+        padding=None,
         max_length=None,
-        truncation=True,
+        truncation=None,
         pad_to_multiple_of=None,
         return_attention_mask=None
     ):
@@ -134,6 +139,9 @@ class EchoFeatureExtractor:
             raise ValueError(f"Expected sampling rate {self.sampling_rate}, got {sampling_rate}")
         
         return_attention_mask = return_attention_mask if return_attention_mask is not None else self.return_attention_mask
+        padding = padding if padding is not None else self.padding
+        max_length = max_length if max_length is not None else self.max_length
+        truncation = truncation if truncation is not None else self.truncation
         
         # Handle different input types (HF dataset compatibility)
         if isinstance(audio, dict) and "array" in audio and "sampling_rate" in audio:
@@ -164,6 +172,8 @@ class EchoFeatureExtractor:
                 tensor = torch.tensor(a, dtype=torch.float32, device=self.device)
             elif isinstance(a, dict) and "array" in a:
                 tensor = torch.tensor(a["array"], dtype=torch.float32, device=self.device)
+            else:
+                raise ValueError("Unsupported audio format")
             
             # Ensure we have the right shape (mono audio)
             if tensor.dim() == 1:
@@ -403,6 +413,9 @@ def load_audio(file_path, target_sr=16000):
         resampler = T.Resample(sr, target_sr)
         waveform = resampler(waveform)
     return waveform
+
+
+
 
 
 
